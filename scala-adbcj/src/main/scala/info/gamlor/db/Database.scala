@@ -3,6 +3,7 @@ package info.gamlor.db
 import org.adbcj._
 import concurrent.{Promise, Future, ExecutionContext}
 import java.util
+import util.concurrent.atomic.AtomicReference
 
 /**
  * @author roman.stoffel@gamlor.info
@@ -115,6 +116,10 @@ class DatabaseAccess(val connectionManager: ConnectionManager,
    */
   def connect(): Future[DBConnection] = {
     completeWithAkkaFuture[Connection, DBConnection](() => connectionManager.connect(), c => DBConnection(c))
+  }
+
+  def close():Future[Unit] = {
+    completeWithAkkaFuture[Void, Unit](() => connectionManager.close(), _ => ())
   }
 
 }
