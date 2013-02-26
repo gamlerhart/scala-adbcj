@@ -1,1 +1,3 @@
-Introduction Blog-Post: http://www.gamlor.info/wordpress/2012/03/async-file-io-with-akka-and-java-7/
+A wrapper to use ADBCJ with Scala 2.10.
+
+ADBCJ: https://github.com/gamlerhart/adbcj
