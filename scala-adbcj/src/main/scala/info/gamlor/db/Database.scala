@@ -4,6 +4,7 @@ import org.adbcj._
 import concurrent.{Promise, Future, ExecutionContext}
 import java.util
 import util.concurrent.atomic.AtomicReference
+import info.gamlor.db.DBConnection
 
 /**
  * @author roman.stoffel@gamlor.info
@@ -78,7 +79,9 @@ class DatabaseAccess(val connectionManager: ConnectionManager,
  * when the future which the closure returns finishes.
  *
  * This is intended for doing multiple read operations and then close the file: for example:
- * <pre>Database(akkaSystem).withConnection{
+ * <pre>
+ *     val dbSupport = Database("url","user","pwd")
+ *     dbSupport.withConnection{
  *      connection=>{
  *       connection.executeQuery("SELECT first_name,last_name,hire_date FROM employees")
  *        }
@@ -105,6 +108,29 @@ class DatabaseAccess(val connectionManager: ConnectionManager,
     }
 
     )
+  }
+  /**
+   * Opens a connection to the database, begins transaction, then runs the code of the given closure with it.
+   * It will commit and close the connection when the future which the closure returns finishes.
+   *
+   * It is the same as using [[info.gamlor.db.DatabaseAccess#withConnection]] and then
+   * [[info.gamlor.db.DBConnection#withTransaction]] on that connection.
+   *
+   * This is intended for doing a transaction directly.
+   * <pre>
+   *     val dbSupport = Database("url","user","pwd")
+   *     dbSupport.withTransaction{
+   *       connection.executeQuery("SELECT first_name,last_name,hire_date FROM employees")
+   *        }
+   *     }
+   *    }</pre>
+   * @param operation the closure to execute
+   */
+  def withTransaction[T](operation: DBConnection => Future[T]): Future[T] = {
+    this.withConnection{
+      conn=>
+        conn.withTransaction(operation)
+    }
   }
 
 

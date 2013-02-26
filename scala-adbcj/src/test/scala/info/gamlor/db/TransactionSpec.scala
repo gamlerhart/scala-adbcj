@@ -143,6 +143,34 @@ class TransactionSpec extends SpecBaseWithDB {
       failANestedTransaction(tx=> futureFailsInNestedTransaction(tx))
     }
 
+    it("uses transaction directly") {
+      val dataFuture =
+        dbConnection.withTransaction {
+          tx =>
+            tx.isInTransaction() must be (true)
+            val selectedData = for {
+              _ <- tx.executeUpdate("INSERT INTO insertTable(data) VALUES('transactionsCommit')")
+              data <- tx.executeQuery("SELECT * FROM insertTable WHERE data LIKE 'transactionsCommit';")
+
+            } yield data
+            selectedData
+        }
+      val data = Await.result(dataFuture, 5 seconds)
+
+      data.size must be(1)
+
+      val checkingConnection = dbConnection.withConnection{
+        con =>
+          con.executeQuery("SELECT * FROM insertTable" +
+            " WHERE data LIKE 'transactionsCommit';")
+      }
+
+      val hasCommitted = Await.result(checkingConnection, 5 seconds)
+
+
+      hasCommitted.size must be(1)
+    }
+
   }
 
 
